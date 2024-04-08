@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Crouch Beat</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="language" content="en" />
+	<meta name="description" content="Crouch to make the colored square jump. A game to work out with PC webpage. " />
+	<meta name="keywords" content="game music notes ggj beat" />
+	<link rel="stylesheet" type="text/css" href="styles/style.css">
+</head>
+
+<body>
+	<audio id="hit" src="sfx/hit.wav" preload="auto"></audio>
+	<audio id="note1" src="sfx/note1.wav" preload="auto"></audio>
+	<audio id="note2" src="sfx/note2.wav" preload="auto"></audio>
+	<audio id="note3" src="sfx/note3.wav" preload="auto"></audio>
+	<audio id="note4" src="sfx/note4.wav" preload="auto"></audio>
+	<audio id="note5" src="sfx/note5.wav" preload="auto"></audio>
+
+    <div class="video-container">
+        <div class="video-area">
+            <video id="video" width="384" height="288" autoplay></video>
+        </div>
+        <div class="info-area">
+            <h2 class="title">Crouch BEAT</h2>
+            <br><br>
+			<h4>Crouch to make it jump, Esc to stop or resume</h4>
+            <div class="gameover-msg" style="display: block;">
+				<br>
+                <h2>Game Over!</h2> 
+                <h3>You scored: <span class="js-score"></span> </h3>
+                <button class="js-play-again-button  play-again-button">Play Again (Enter)</button> 
+                <br><br>
+				<a href="#" class="js-share-twitter">Share on Twitter</a> |
+    			<a href="#" class="js-share-facebook">Share on Facebook</a> 
+    		<!-- <button class="js-share-wechat">Share to WeChat</button>  -->
+			</div>
+        </div>
+    </div>
+	<div class="screen game">
+		<div class="hud  hud--left">
+			<ul class="hud--life">
+				<li class="hud--life__item">&hearts;</li>
+				<li class="hud--life__item">&hearts;</li>
+				<li class="hud--life__item">&hearts;</li>
+			</ul>
+		</div>
+
+		<div class="hud  hud--right">
+			<span class="js-collectibles">0</span>
+			<img src="images/coins.png" alt="">
+		</div>
+
+		<div class="canvas-container">
+			<div class="player"><div class="player__mouth"></div></div>
+			<div class="callout"><div class="callout_text"></div></div>
+			<canvas id="c"></canvas>
+		</div>
+
+		<div class="hud  hud--left">
+			<img src="images/trophy.png" alt="">
+			<span class="js-highscore">0</span>
+		</div>
+
+		<div class="hud  hud--right">
+			<span class="js-score">0</span>
+			<img src="images/clock.png" alt="">
+		</div>
+
+		<div class="clear"></div>
+		
+
+
+	</div>
+
+
+
+    <script type="text/javascript" src="vendor/jquery.js"></script>
+	<script type="text/javascript" src="src/engine.js"></script>
+	<script type="text/javascript" src="src/globals.js"></script>
+	<script type="text/javascript" src="src/data.js"></script>
+	<script type="text/javascript" src="src/managers.js"></script>
+	<script type="text/javascript" src="src/entities.js"></script>
+	<script type="text/javascript" src="src/game.js"></script>
+
+
+
+    <div style="display:none">
+        <p>Head Position: <span id="headPosition">(x, y)</span></p>
+        <p>Head Count: <span id="headCount">0</span></p>
+    </div>
+
+
+	
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
+<script>
+	async function setupCamera() {
+		const video = document.getElementById('video');
+		const stream = await navigator.mediaDevices.getUserMedia({
+			'audio': false,
+			'video': { facingMode: 'user' }
+		});
+		video.srcObject = stream;
+
+		return new Promise(resolve => {
+			video.onloadedmetadata = () => {
+				resolve(video);
+			};
+		});
+	}
+
+	async function detectPose(video, net) {
+
+		const pose = await net.estimateSinglePose(video, {
+			flipHorizontal: false
+		});
+
+
+		// Draw horizontal line at the middle
+		const middleY = video.height / 2;
+
+		const headPosition = pose.keypoints[0].position; // Assuming the nose is the head position
+		const headCountElement = document.getElementById('headCount');
+		const currentHeadCount = parseInt(headCountElement.textContent);
+		const headPositionElement = document.getElementById('headPosition');
+		headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
+
+		const previousY = parseFloat(headPositionElement.dataset.previousY) || 0;
+
+		if (headPosition.y > middleY && previousY < middleY) {
+			headCountElement.textContent = (currentHeadCount + 1).toString();
+			if(window.player.is_on_ground) {
+			        window.player.jump();
+		    }
+		}
+
+		headPositionElement.dataset.previousY = headPosition.y;
+
+		requestAnimationFrame(() => detectPose(video, net));
+	}
+
+	async function runPosenet() {
+		const net = await posenet.load();
+		console.log('Posenet model loaded');
+		const video = await setupCamera();
+		video.play();
+		detectPose(video, net);
+	}
+
+	runPosenet();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scoreElement = document.querySelector('.js-score');
+    const shareTwitter = document.querySelector('.js-share-twitter');
+    const shareFacebook = document.querySelector('.js-share-facebook');
+    const shareWechat = document.querySelector('.js-share-wechat');
+
+    function updateScore() {
+        const score = scoreElement.textContent; 
+        
+        const tweetText = `I scored ${score} in Crouch Beat! Can you beat me?`;
+        const shareURL = `https://crouchbeat.github.io/`; 
+        shareTwitter.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareURL)}`;
+        shareFacebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareURL)}&quote=${encodeURIComponent(tweetText)}`;
+        
+       
+    }
+
+	updateScore(); 
+});
+</script>
+
+<footer>
+</footer>
+
+
+
+</html>
