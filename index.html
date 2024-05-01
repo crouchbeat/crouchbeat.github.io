@@ -29,7 +29,7 @@
         <div class="info-area">
             <h2 class="title">Crouch BEAT</h2>
             <br><br>
-			<h4>Squat to make it jump, move your face from top half of camera view to bottom half.</h4>
+			<h4>Each time you move your face up from a squat to a standing will trigger the jumping of red square.</h4>
             <div class="gameover-msg" style="display: block;">
 				<br>
                 <h2>Game Over!</h2> 
@@ -114,23 +114,6 @@
 	}
 
 	async function detectFace(video) {
-    //    const canvas = document.getElementById('overlay');
-    //    const context = canvas.getContext('2d');
-
-        // Clear previous drawings
-    //    context.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the video frame onto the canvas
-    //    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Draw horizontal line at the middle
-    //    context.strokeStyle = '#FF0000'; // Red line
-    //    context.lineWidth = 2;
-        const middleY = video.height / 2;
-    //    context.beginPath();
-    //    context.moveTo(0, middleY);
-    //    context.lineTo(canvas.width, middleY);
-    //    context.stroke();
 
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
         
@@ -143,19 +126,19 @@
             const headPositionElement = document.getElementById('headPosition');
             headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
 
-            const previousY = parseFloat(headPositionElement.dataset.previousY) || 0;
-
-            if (headPosition.y > middleY && previousY < middleY) {
-                const currentTime = Date.now();
-                if (!headPositionElement.dataset.lastJumpTime || (currentTime - parseInt(headPositionElement.dataset.lastJumpTime)) > 200) {
+          
+            let maxY = parseFloat(headPositionElement.dataset.maxY) || headPosition.y;
+            if (headPosition.y < maxY) {
+                const distanceMoved = maxY - headPosition.y;
+                if (distanceMoved > video.height / 3) {
                     headCountElement.textContent = (currentHeadCount + 1).toString();
                     window.player.jump();
-                    headPositionElement.dataset.lastJumpTime = currentTime.toString();
-
+                    headPositionElement.dataset.maxY = headPosition.y.toString();
+                    maxY = headPosition.y; // Update maxY after jump
                 }
             }
-
-            headPositionElement.dataset.previousY = headPosition.y;
+            headPositionElement.dataset.maxY = Math.max(maxY, headPosition.y).toString();
+       
         } else {
             console.log("No faces detected.");
         }
