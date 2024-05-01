@@ -146,8 +146,13 @@
             const previousY = parseFloat(headPositionElement.dataset.previousY) || 0;
 
             if (headPosition.y > middleY && previousY < middleY) {
-                headCountElement.textContent = (currentHeadCount + 1).toString();
-                window.player.jump();
+                const currentTime = Date.now();
+                if (!headPositionElement.dataset.lastJumpTime || (currentTime - parseInt(headPositionElement.dataset.lastJumpTime)) > 200) {
+                    headCountElement.textContent = (currentHeadCount + 1).toString();
+                    window.player.jump();
+                    headPositionElement.dataset.lastJumpTime = currentTime.toString();
+
+                }
             }
 
             headPositionElement.dataset.previousY = headPosition.y;
