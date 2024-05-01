@@ -7,6 +7,7 @@
 	<meta name="description" content="Squat workout at home or office. A game to work out with PC webpage. " />
 	<meta name="keywords" content="squat workout game" />
 	<link rel="stylesheet" type="text/css" href="styles/style.css">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BYLQNFZ4Y7"></script>
@@ -23,11 +24,12 @@
     <div class="video-container">
         <div class="video-area">
             <video id="video" width="384" height="288" autoplay muted ></video>
-        </div>
+		<!-- <canvas id="overlay" width="384" height="288" style="position: absolute; top: 0; right: 0;"></canvas> -->	
+		</div>
         <div class="info-area">
             <h2 class="title">Crouch BEAT</h2>
             <br><br>
-			<h4>Squat to make it jump, Esc to stop or resume</h4>
+			<h4>Squat to make it jump, move your face from top half of camera view to bottom half.</h4>
             <div class="gameover-msg" style="display: block;">
 				<br>
                 <h2>Game Over!</h2> 
@@ -88,15 +90,13 @@
 
 
 
-    <div style="display:none">
+    <div style="display:block">
         <p>Head Position: <span id="headPosition">(x, y)</span></p>
-        <p>Head Count: <span id="headCount">0</span></p>
+        <p>Squat Count: <span id="headCount">0</span></p>
     </div>
 
-
+	<script src="models/face-api.js"></script>
 	
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
 <script>
 	async function setupCamera() {
 		const video = document.getElementById('video');
@@ -113,45 +113,61 @@
 		});
 	}
 
-	async function detectPose(video, net) {
+	async function detectFace(video) {
+    //    const canvas = document.getElementById('overlay');
+    //    const context = canvas.getContext('2d');
 
-		const pose = await net.estimateSinglePose(video, {
-			flipHorizontal: false
-		});
+        // Clear previous drawings
+    //    context.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Draw the video frame onto the canvas
+    //    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-		// Draw horizontal line at the middle
-		const middleY = video.height / 2;
+        // Draw horizontal line at the middle
+    //    context.strokeStyle = '#FF0000'; // Red line
+    //    context.lineWidth = 2;
+        const middleY = video.height / 2;
+    //    context.beginPath();
+    //    context.moveTo(0, middleY);
+    //    context.lineTo(canvas.width, middleY);
+    //    context.stroke();
 
-		const headPosition = pose.keypoints[0].position; // Assuming the nose is the head position
-		const headCountElement = document.getElementById('headCount');
-		const currentHeadCount = parseInt(headCountElement.textContent);
-		const headPositionElement = document.getElementById('headPosition');
-		headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+        
+        // Check if any faces are detected
+        if (detections.length > 0) {
+            const headPosition = detections[0].landmarks.getNose()[0];
 
-		const previousY = parseFloat(headPositionElement.dataset.previousY) || 0;
+            const headCountElement = document.getElementById('headCount');
+            const currentHeadCount = parseInt(headCountElement.textContent);
+            const headPositionElement = document.getElementById('headPosition');
+            headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
 
-		if (headPosition.y > middleY && previousY < middleY) {
-			headCountElement.textContent = (currentHeadCount + 1).toString();
-			if(window.player.is_on_ground) {
-			        window.player.jump();
-		    }
-		}
+            const previousY = parseFloat(headPositionElement.dataset.previousY) || 0;
 
-		headPositionElement.dataset.previousY = headPosition.y;
+            if (headPosition.y > middleY && previousY < middleY) {
+                headCountElement.textContent = (currentHeadCount + 1).toString();
+                window.player.jump();
+            }
 
-		requestAnimationFrame(() => detectPose(video, net));
-	}
+            headPositionElement.dataset.previousY = headPosition.y;
+        } else {
+            console.log("No faces detected.");
+        }
 
-	async function runPosenet() {
-		const net = await posenet.load();
-		console.log('Posenet model loaded');
+        requestAnimationFrame(() => detectFace(video));
+    }
+
+    async function runFaceDetection() {
+		await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+		await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+		console.log('Models loaded');
 		const video = await setupCamera();
 		video.play();
-		detectPose(video, net);
+		detectFace(video);
 	}
 
-	runPosenet();
+	runFaceDetection();
 </script>
 
 <script>
@@ -178,19 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <footer>
     <div class="donate-section">
         <div class="donate-options">
-     <!--   <div class="alipay">
-                <h4>Donate with Alipay</h4>
-                <img src="images/alipay.png" alt="Alipay donation QR code" style="width:100px;height:100px;">
-            </div> -->
             <div class="paypal">
                 <a href="https://www.paypal.me/124301279" target="_blank"><h3>Donate with PayPal</h3></a>
-                <!-- 或者如果你有PayPal按钮的代码 -->
-                <!-- <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-                    <input type="hidden" name="cmd" value="_s-xclick">
-                    <input type="hidden" name="hosted_button_id" value="你的按钮ID">
-                    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button">
-                    <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
-                </form> -->
             </div>
         </div>
     </div>
