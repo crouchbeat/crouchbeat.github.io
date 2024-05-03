@@ -90,7 +90,7 @@
 
 
 
-    <div style="display:block">
+    <div style="display:none">
         <p>Head Position: <span id="headPosition">(x, y)</span></p>
         <p>Squat Count: <span id="headCount">0</span></p>
     </div>
@@ -117,21 +117,20 @@
 
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
         
-        // Check if any faces are detected
         if (detections.length > 0) {
             const headPosition = detections[0].landmarks.getNose()[0];
 
-            const headCountElement = document.getElementById('headCount');
-            const currentHeadCount = parseInt(headCountElement.textContent);
-            const headPositionElement = document.getElementById('headPosition');
-            headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
+        //    const headCountElement = document.getElementById('headCount');
+        //    const currentHeadCount = parseInt(headCountElement.textContent);
+        //    const headPositionElement = document.getElementById('headPosition');
+        //    headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
 
           
             let maxY = parseFloat(headPositionElement.dataset.maxY) || headPosition.y;
             if (headPosition.y < maxY) {
                 const distanceMoved = maxY - headPosition.y;
-                if (distanceMoved > video.height / 4) {
-                    headCountElement.textContent = (currentHeadCount + 1).toString();
+                if (distanceMoved > video.height / 5) {
+        //            headCountElement.textContent = (currentHeadCount + 1).toString();
                     window.player.jump();
                     headPositionElement.dataset.maxY = headPosition.y.toString();
                     maxY = headPosition.y; // Update maxY after jump
