@@ -113,36 +113,38 @@
 		});
 	}
 
+
+	let maxY = 0;
+	let minY = 1000;
+	let middleY = 500;
+	let previousY = 0;
+	let frameCount = 0;
+
 	async function detectFace(video) {
-
-        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+		frameCount++;
+		if (frameCount % 3 > 0){
+			requestAnimationFrame(() => detectFace(video));   
+		} else {
+            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
         
-        if (detections.length > 0) {
-            const headPosition = detections[0].landmarks.getNose()[0];
-
-        //    const headCountElement = document.getElementById('headCount');
-        //    const currentHeadCount = parseInt(headCountElement.textContent);
-            const headPositionElement = document.getElementById('headPosition');
-        //    headPositionElement.textContent = `(${headPosition.x.toFixed(2)}, ${headPosition.y.toFixed(2)})`;
-
-          
-            let maxY = parseFloat(headPositionElement.dataset.maxY) || headPosition.y;
-            if (headPosition.y < maxY) {
-                const distanceMoved = maxY - headPosition.y;
-                if (distanceMoved > video.height / 4) {
-        //            headCountElement.textContent = (currentHeadCount + 1).toString();
-                    window.player.jump();
-                    headPositionElement.dataset.maxY = headPosition.y.toString();
-                    maxY = headPosition.y; // Update maxY after jump
-                }
+            if (detections.length > 0) {
+                const headPosition = detections[0].landmarks.getNose()[0];
+			    if (headPosition.y > maxY) maxY = headPosition.y;
+			    if (headPosition.y < minY) minY = headPosition.y;
+			    middleY = (maxY + minY) / 2;
+			//    const middleY = video.height / 2;
+                if (headPosition.y < middleY && previousY > middleY){
+				    if (window.player.speed_y > -500){
+				        window.player.jump();
+				    }
+			    }
+                previousY = headPosition.y;
+            } else {
+                console.log("No faces.");
             }
-            headPositionElement.dataset.maxY = Math.max(maxY, headPosition.y).toString();
-       
-        } else {
-            console.log("No faces detected.");
-        }
-
-        requestAnimationFrame(() => detectFace(video));
+        
+            requestAnimationFrame(() => detectFace(video));    
+	    }
     }
 
     async function runFaceDetection() {
