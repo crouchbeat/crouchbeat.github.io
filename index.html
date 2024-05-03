@@ -130,7 +130,7 @@
             let maxY = parseFloat(headPositionElement.dataset.maxY) || headPosition.y;
             if (headPosition.y < maxY) {
                 const distanceMoved = maxY - headPosition.y;
-                if (distanceMoved > video.height / 3) {
+                if (distanceMoved > video.height / 4) {
                     headCountElement.textContent = (currentHeadCount + 1).toString();
                     window.player.jump();
                     headPositionElement.dataset.maxY = headPosition.y.toString();
