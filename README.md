@@ -2,6 +2,8 @@
 
 Crouch Beat is an interactive web-based game designed to encourage physical activity through gameplay. Players control the game by crouching in front of their computer's webcam, which makes the on-screen character jump. The game combines fitness with fun, making it a unique addition to your daily workout routine or just a casual play.
 
+Play this game at  https://crouchbeat.github.io/
+
 ## Features
 
 - **Webcam Interaction**: Utilizes the webcam to detect player movements, specifically crouching, to control the game character.
