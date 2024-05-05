@@ -131,8 +131,8 @@
                 const headPosition = detections[0].landmarks.getNose()[0];
 			    if (headPosition.y > maxY) maxY = headPosition.y;
 			    if (headPosition.y < minY) minY = headPosition.y;
-			    middleY = (maxY + minY) / 2;
-			//    const middleY = video.height / 2;
+			//    middleY = (maxY + minY) / 2;
+			    const middleY = video.height / 2;
                 if (headPosition.y < middleY && previousY > middleY){
 				//    if (window.player.speed_y > -500){
 				        window.player.jump();
