@@ -114,23 +114,23 @@
 	}
 
 
-	let maxY = 0;
-	let minY = 1000;
+//	let maxY = 0;
+//	let minY = 1000;
 	let middleY = 500;
 	let previousY = 0;
 	let frameCount = 0;
 
 	async function detectFace(video) {
 		frameCount++;
-		if (frameCount % 4 > 0){
+		if (frameCount % 2 > 0){
 			requestAnimationFrame(() => detectFace(video));   
 		} else {
             const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
         
             if (detections.length > 0) {
                 const headPosition = detections[0].landmarks.getNose()[0];
-			    if (headPosition.y > maxY) maxY = headPosition.y;
-			    if (headPosition.y < minY) minY = headPosition.y;
+			//    if (headPosition.y > maxY) maxY = headPosition.y;
+			//    if (headPosition.y < minY) minY = headPosition.y;
 			//    middleY = (maxY + minY) / 2;
 			    const middleY = video.height / 2;
                 if (headPosition.y < middleY && previousY > middleY){
